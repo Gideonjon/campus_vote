@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -11,6 +12,7 @@ import 'screens/host/host_home_screen.dart';
 import 'screens/host/key_backup_screen.dart';
 import 'screens/landing_screen.dart';
 import 'screens/results_screen.dart';
+import 'screens/web_landing_screen.dart';
 import 'screens/voter/ballot_screen.dart';
 import 'screens/voter/receipt_screen.dart';
 import 'screens/voter/voter_entry_screen.dart';
@@ -47,7 +49,11 @@ final appRouter = GoRouter(
     return null;
   },
   routes: [
-    GoRoute(path: '/', builder: (_, __) => const LandingScreen()),
+    GoRoute(
+      path: '/',
+      builder: (_, __) =>
+          kIsWeb ? const WebLandingScreen() : const LandingScreen(),
+    ),
     GoRoute(path: '/login', builder: (_, __) => const AuthScreen()),
 
     // ---------------- host
