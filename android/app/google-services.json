@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1098284943649",
+    "project_id": "campus-vote-f26fc",
+    "storage_bucket": "campus-vote-f26fc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098284943649:android:375de3d84edee9db919660",
+        "android_client_info": {
+          "package_name": "com.example.campus_vote"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFubDQuEXCoHE3q-O8zs8KUD6iRCWotCg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

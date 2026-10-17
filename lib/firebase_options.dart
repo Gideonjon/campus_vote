@@ -17,22 +17,13 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for android - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return android;
       case TargetPlatform.iOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for ios - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return ios;
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
@@ -64,6 +55,31 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1098284943649',
     projectId: 'campus-vote-f26fc',
     authDomain: 'campus-vote-f26fc.firebaseapp.com',
+    storageBucket: 'campus-vote-f26fc.firebasestorage.app',
+  );
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyAz0O0_18OIYKwOJKSwmeTBlHSaRp1eHSU',
+    appId: '1:1098284943649:web:0028d4681f92c7d0919660',
+    messagingSenderId: '1098284943649',
+    projectId: 'campus-vote-f26fc',
+    authDomain: 'campus-vote-f26fc.firebaseapp.com',
+    storageBucket: 'campus-vote-f26fc.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyB6QQCUofgclseNre1pPuN-T9m8fjTECMY',
+    appId: '1:1098284943649:ios:4caf58d14efd64d1919660',
+    messagingSenderId: '1098284943649',
+    projectId: 'campus-vote-f26fc',
+    storageBucket: 'campus-vote-f26fc.firebasestorage.app',
+    iosBundleId: 'com.example.campusVote',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBFubDQuEXCoHE3q-O8zs8KUD6iRCWotCg',
+    appId: '1:1098284943649:android:375de3d84edee9db919660',
+    messagingSenderId: '1098284943649',
+    projectId: 'campus-vote-f26fc',
     storageBucket: 'campus-vote-f26fc.firebasestorage.app',
   );
 }
