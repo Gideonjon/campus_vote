@@ -1,6 +1,7 @@
 {
   "projects": {
-    "production": "campus-vote-f26fc"
+    "production": "campus-vote-f26fc",
+    "default": "campus-vote-f26fc"
   },
   "targets": {},
   "etags": {}
