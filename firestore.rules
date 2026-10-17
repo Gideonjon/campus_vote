@@ -1,0 +1,154 @@
+rules_version = '2';
+
+// CampusVote security rules.
+//
+// Data model
+//   elections/{eid}                 public election info + public encryption key
+//   elections/{eid}/eligible/{m}    allowed matric numbers (used / usedBy)
+//   elections/{eid}/voters/{uid}    WHO voted (no choices)
+//   elections/{eid}/ballots/{rand}  WHAT was voted (ciphertext only, no uid, no time)
+//   elections/{eid}/public/results  decrypted totals, published by the host
+//
+// A vote is ONE batched write: create voters/{uid} + claim eligible/{matric}
+// + create one anonymous ballot. The rules below cross-check each other with
+// exists()/existsAfter()/getAfter() so one voter can only ever vote once,
+// without needing Cloud Functions (works on the free Spark plan).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function electionDoc(eid) {
+      return /databases/$(database)/documents/elections/$(eid);
+    }
+
+    function election(eid) {
+      return get(electionDoc(eid)).data;
+    }
+
+    function isHost(eid) {
+      return signedIn() && election(eid).hostId == request.auth.uid;
+    }
+
+    function isDraft(eid) {
+      return election(eid).status == 'draft';
+    }
+
+    // Voting is allowed only while status is 'open' AND the server clock is
+    // inside the election window.
+    function isOpen(eid) {
+      let e = election(eid);
+      return e.status == 'open'
+        && request.time >= e.startAt
+        && request.time < e.endAt;
+    }
+
+    function myVoterDoc(eid) {
+      return /databases/$(database)/documents/elections/$(eid)/voters/$(request.auth.uid);
+    }
+
+    function eligibleDoc(eid, matric) {
+      return /databases/$(database)/documents/elections/$(eid)/eligible/$(matric);
+    }
+
+    function b64(v, maxLen) {
+      return v is string && v.size() > 0 && v.size() <= maxLen;
+    }
+
+    function validTransition(from, to) {
+      return from == to
+        || (from == 'draft' && to == 'open')
+        || (from == 'open' && to == 'closed')
+        || (from == 'closed' && to == 'published');
+    }
+
+    match /elections/{eid} {
+      allow read: if true;
+
+      allow create: if signedIn()
+        && request.resource.data.hostId == request.auth.uid
+        && request.resource.data.status == 'draft'
+        && request.resource.data.publicKey is string
+        && request.resource.data.requiresOfficerKey is bool
+        && request.resource.data.startAt is timestamp
+        && request.resource.data.endAt is timestamp
+        && request.resource.data.endAt > request.resource.data.startAt;
+
+      // Host can manage the election, but can never swap the encryption key,
+      // and can't edit the ballot (positions/candidates) once voting opens.
+      allow update: if signedIn()
+        && resource.data.hostId == request.auth.uid
+        && request.resource.data.hostId == resource.data.hostId
+        && request.resource.data.publicKey == resource.data.publicKey
+        && request.resource.data.requiresOfficerKey == resource.data.requiresOfficerKey
+        && (resource.data.status == 'draft'
+            || request.resource.data.positions == resource.data.positions)
+        && request.resource.data.endAt > request.resource.data.startAt
+        && validTransition(resource.data.status, request.resource.data.status);
+
+      allow delete: if signedIn()
+        && resource.data.hostId == request.auth.uid
+        && resource.data.status == 'draft';
+
+      match /eligible/{matric} {
+        // Voters can check a single matric number, but can't download the list.
+        allow get: if signedIn();
+        allow list: if isHost(eid);
+        allow create, delete: if isHost(eid) && isDraft(eid);
+
+        allow update: if (isHost(eid) && isDraft(eid))
+          || (signedIn()
+              && isOpen(eid)
+              && resource.data.used == false
+              && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['used', 'usedBy'])
+              && request.resource.data.used == true
+              && request.resource.data.usedBy == request.auth.uid
+              && !exists(myVoterDoc(eid))
+              && existsAfter(myVoterDoc(eid)));
+      }
+
+      match /voters/{uid} {
+        allow get: if signedIn() && (request.auth.uid == uid || isHost(eid));
+        allow list: if isHost(eid);
+
+        allow create: if signedIn()
+          && request.auth.uid == uid
+          && isOpen(eid)
+          && request.resource.data.keys().hasOnly(['matric', 'votedAt'])
+          && request.resource.data.matric is string
+          && request.resource.data.votedAt == request.time
+          // the matric number must be unused before this write and claimed by me in it
+          && get(eligibleDoc(eid, request.resource.data.matric)).data.used == false
+          && getAfter(eligibleDoc(eid, request.resource.data.matric)).data.usedBy == request.auth.uid;
+
+        allow update, delete: if false;
+      }
+
+      match /ballots/{ballotId} {
+        // Ballots are ciphertext only, so reading them reveals nothing.
+        // Being readable lets anyone audit the published receipts.
+        allow read: if signedIn();
+
+        allow create: if signedIn()
+          && isOpen(eid)
+          && !exists(myVoterDoc(eid))
+          && existsAfter(myVoterDoc(eid))
+          && request.resource.data.keys().hasOnly(['epk', 'nonce', 'ct', 'mac'])
+          && b64(request.resource.data.epk, 64)
+          && b64(request.resource.data.nonce, 32)
+          && b64(request.resource.data.ct, 2048)
+          && b64(request.resource.data.mac, 32);
+
+        allow update, delete: if false;
+      }
+
+      match /public/{docId} {
+        allow read: if true;
+        allow write: if isHost(eid);
+      }
+    }
+  }
+}
