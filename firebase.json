@@ -1,1 +1,27 @@
-{"flutter":{"platforms":{"macos":{"default":{"projectId":"campus-vote-f26fc","appId":"1:1098284943649:ios:4caf58d14efd64d1919660","uploadDebugSymbols":false,"fileOutput":"macos/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"campus-vote-f26fc","configurations":{"macos":"1:1098284943649:ios:4caf58d14efd64d1919660","windows":"1:1098284943649:web:0028d4681f92c7d0919660"}}}}}}
+
+{
+  "flutter": {
+    "platforms": {
+      "macos": {
+        "default": {
+          "projectId": "campus-vote-f26fc",
+          "appId": "1:1098284943649:ios:4caf58d14efd64d1919660",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "campus-vote-f26fc",
+          "configurations": {
+            "macos": "1:1098284943649:ios:4caf58d14efd64d1919660",
+            "windows": "1:1098284943649:web:0028d4681f92c7d0919660"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
